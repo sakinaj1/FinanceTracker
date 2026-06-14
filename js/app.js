@@ -1,6 +1,9 @@
+// Saved data key.
 const STORAGE_KEY = "finance-tracker.transactions";
+// Default choices for categories.
 const DEFAULT_CATEGORIES = ["Salary", "Freelance", "Rent", "Groceries", "Transport", "Utilities", "Dining", "Health", "Entertainment", "Savings", "Other"];
 
+// Page parts.
 const form = document.getElementById("transactionForm");
 const amountInput = document.getElementById("amount");
 const typeInput = document.getElementById("type");
@@ -25,20 +28,24 @@ const resetFilters = document.getElementById("resetFilters");
 const clearAll = document.getElementById("clearAll");
 const seedDemo = document.getElementById("seedDemo");
 
+// Money format.
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "INR"
 });
 
+// Today's date for the form.
 const today = new Date();
 dateInput.value = toDateValue(today);
 
+// Saved items in memory.
 let transactions = loadTransactions();
 
 populateCategoryOptions();
 bindEvents();
 render();
 
+// Read saved items.
 function loadTransactions() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -48,18 +55,22 @@ function loadTransactions() {
   }
 }
 
+// Write saved items.
 function saveTransactions() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
 }
 
+// Turn a date into YYYY-MM-DD.
 function toDateValue(date) {
   return new Date(date).toISOString().slice(0, 10);
 }
 
+// Show money in a clean way.
 function formatMoney(value) {
   return currency.format(value || 0);
 }
 
+// Show a friendly date.
 function formatDisplayDate(value) {
   const date = new Date(value + "T00:00:00");
   return new Intl.DateTimeFormat("en-US", {
@@ -69,10 +80,12 @@ function formatDisplayDate(value) {
   }).format(date);
 }
 
+// Keep category text tidy.
 function normalizeCategory(name) {
   return name.trim().replace(/\s+/g, " ");
 }
 
+// Connect buttons and filters.
 function bindEvents() {
   form.addEventListener("submit", handleSubmit);
   resetFilters.addEventListener("click", () => {
@@ -105,6 +118,7 @@ function bindEvents() {
   [filterCategory, fromDate, toDate].forEach((input) => input.addEventListener("change", render));
 }
 
+// Update category lists.
 function populateCategoryOptions() {
   const selectedFilter = filterCategory.value || "all";
   const categories = Array.from(new Set([...DEFAULT_CATEGORIES, ...transactions.map((transaction) => transaction.category)]))
@@ -115,6 +129,7 @@ function populateCategoryOptions() {
   filterCategory.value = categories.includes(selectedFilter) ? selectedFilter : "all";
 }
 
+// Save one new item.
 function handleSubmit(event) {
   event.preventDefault();
 
@@ -145,6 +160,7 @@ function handleSubmit(event) {
   render();
 }
 
+// Get items that match filters.
 function getFilteredTransactions() {
   const selectedCategory = filterCategory.value;
   const start = fromDate.value;
@@ -157,6 +173,7 @@ function getFilteredTransactions() {
     .filter((transaction) => !end || transaction.date <= end);
 }
 
+// Update the whole page.
 function render() {
   populateCategoryOptions();
 
@@ -177,6 +194,7 @@ function render() {
   renderTransactions(filteredTransactions);
 }
 
+// Count totals and balance.
 function computeStats(source) {
   const totals = source.reduce((accumulator, transaction) => {
     const signedAmount = Number(transaction.amount) || 0;
@@ -208,6 +226,7 @@ function computeStats(source) {
   };
 }
 
+// Draw the saved items list.
 function renderTransactions(items) {
   if (!items.length) {
     transactionList.innerHTML = `<div class="empty-state">No transactions match the current filters.</div>`;
@@ -241,6 +260,7 @@ function renderTransactions(items) {
   });
 }
 
+// Draw the spending bars.
 function renderChart(expenseByCategory) {
   const entries = Object.entries(expenseByCategory).sort((left, right) => right[1] - left[1]);
 
@@ -264,6 +284,7 @@ function renderChart(expenseByCategory) {
   }).join("");
 }
 
+// Show a short spending note.
 function renderInsight(stats) {
   if (!transactions.length) {
     insightText.textContent = "Add transactions to unlock a rule-based spending insight.";
@@ -295,6 +316,7 @@ function renderInsight(stats) {
   insightText.textContent = `Healthy sign: you have a positive net balance of ${formatMoney(stats.balance)} and your spending is spread across ${Object.keys(stats.expenseByCategory).length} categories.`;
 }
 
+// Keep text safe in the page.
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
